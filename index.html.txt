@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sổ Tay Đọc Truyện Cá Nhân</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>📖 Sổ Tay Đọc Truyện Cá Nhân</h1>
+    </header>
+
+    <div class="container">
+        <section id="add-story-section">
+            <h2>Thêm Truyện Mới</h2>
+            <form id="add-story-form">
+                <input type="url" id="story-link" placeholder="Dán liên kết truyện vào đây (tùy chọn)" autocomplete="off">
+                <button type="button" id="fetch-data-btn">Lấy Dữ Liệu</button>
+                
+                <input type="text" id="story-title" placeholder="* Tên Truyện" required>
+                <input type="url" id="story-image" placeholder="URL Ảnh Bìa (tùy chọn)">
+                <textarea id="story-text" placeholder="Văn bản tóm tắt/giới thiệu"></textarea>
+                <textarea id="story-feeling" placeholder="Cảm xúc của tôi sau khi đọc (Để trống nếu Chưa đọc)"></textarea>
+
+                <select id="story-status" required>
+                    <option value="" disabled selected>Chọn Trạng Thái Đọc</option>
+                    <option value="To Read">Chưa đọc</option>
+                    <option value="In Progress">Đang đọc</option>
+                    <option value="Completed">Đã đọc</option>
+                </select>
+
+                <div id="genre-selection">
+                    <label>Thể loại:</label>
+                </div>
+
+                <button type="submit" class="submit-btn">Lưu Truyện</button>
+            </form>
+        </section>
+
+        <hr>
+
+        <section id="story-list-section">
+            <h2>Danh Sách Truyện</h2>
+            <div id="filters">
+                <button class="filter-btn active" data-filter="All">Tất Cả</button>
+                <button class="filter-btn" data-filter="To Read">Chưa đọc</button>
+                <button class="filter-btn" data-filter="In Progress">Đang đọc</button>
+                <button class="filter-btn" data-filter="Completed">Đã đọc</button>
+                <select id="genre-filter">
+                    <option value="All">Lọc theo Thể loại</option>
+                </select>
+                <button type="button" id="add-genre-btn">➕ Thêm Thể loại</button>
+            </div>
+
+            <div id="story-list">
+                </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

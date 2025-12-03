@@ -1,0 +1,194 @@
+// --- Dữ liệu Mẫu và Lưu trữ Local Storage ---
+
+let stories = JSON.parse(localStorage.getItem('stories')) || [];
+let genres = JSON.parse(localStorage.getItem('genres')) || ['Fantasy', 'Sci-fi', 'Lịch sử', 'Tiểu thuyết'];
+
+// Lưu dữ liệu vào Local Storage
+function saveData() {
+    localStorage.setItem('stories', JSON.stringify(stories));
+    localStorage.setItem('genres', JSON.stringify(genres));
+}
+
+// --- Xử lý Thể loại ---
+
+// Hiển thị các ô checkbox thể loại trong form thêm mới
+function renderGenreCheckboxes() {
+    const genreSelection = document.getElementById('genre-selection');
+    genreSelection.innerHTML = '<label>Thể loại:</label>';
+
+    genres.forEach(genre => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="checkbox" id="genre-${genre.replace(/\s/g, '-')}" name="genres" value="${genre}">
+            <label for="genre-${genre.replace(/\s/g, '-')}">${genre}</label>
+        `;
+        genreSelection.appendChild(div);
+    });
+}
+
+// Hiển thị các tùy chọn thể loại trong thanh lọc
+function renderGenreFilterOptions() {
+    const genreFilter = document.getElementById('genre-filter');
+    genreFilter.innerHTML = '<option value="All">Lọc theo Thể loại</option>';
+
+    genres.forEach(genre => {
+        const option = document.createElement('option');
+        option.value = genre;
+        option.textContent = genre;
+        genreFilter.appendChild(option);
+    });
+}
+
+// Thêm thể loại mới
+document.getElementById('add-genre-btn').addEventListener('click', () => {
+    const newGenre = prompt("Nhập tên Thể loại mới:");
+    if (newGenre && newGenre.trim() !== '') {
+        const normalizedGenre = newGenre.trim();
+        if (!genres.includes(normalizedGenre)) {
+            genres.push(normalizedGenre);
+            saveData();
+            renderGenreCheckboxes();
+            renderGenreFilterOptions();
+            alert(`Đã thêm thể loại: ${normalizedGenre}`);
+        } else {
+            alert("Thể loại này đã tồn tại!");
+        }
+    }
+});
+
+// --- Logic Hiển thị Truyện ---
+
+function renderStoryList(filterStatus = 'All', filterGenre = 'All') {
+    const listContainer = document.getElementById('story-list');
+    listContainer.innerHTML = '';
+
+    let filteredStories = stories;
+
+    // Lọc theo Trạng thái
+    if (filterStatus !== 'All') {
+        filteredStories = filteredStories.filter(story => story.status === filterStatus);
+    }
+
+    // Lọc theo Thể loại
+    if (filterGenre !== 'All') {
+        filteredStories = filteredStories.filter(story => story.genres.includes(filterGenre));
+    }
+
+    if (filteredStories.length === 0) {
+        listContainer.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">Không tìm thấy truyện nào theo tiêu chí lọc.</p>';
+        return;
+    }
+
+    filteredStories.forEach((story, index) => {
+        const card = document.createElement('div');
+        card.className = 'story-card';
+        
+        // Tạo thẻ Genres
+        const genreTags = story.genres.map(g => `<span class="genre-tag">${g}</span>`).join('');
+
+        card.innerHTML = `
+            <img src="${story.image || 'https://via.placeholder.com/280x200?text=No+Cover'}" 
+                 alt="${story.title}" class="story-card-image">
+            <div class="story-card-content">
+                <h3><a href="${story.link}" target="_blank">${story.title}</a></h3>
+                <span class="status-tag ${story.status.replace(/\s/g, '')}">${story.status}</span>
+                <p><strong>Tóm tắt:</strong> ${story.text.substring(0, 100)}...</p>
+                <p>${genreTags}</p>
+                ${story.feeling ? `<p><strong>Cảm xúc:</strong> ${story.feeling}</p>` : ''}
+            </div>
+        `;
+        listContainer.appendChild(card);
+    });
+}
+
+// --- Xử lý Thêm Truyện ---
+
+document.getElementById('add-story-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById('story-title').value.trim();
+    const status = document.getElementById('story-status').value;
+    
+    // Lấy các thể loại đã chọn
+    const selectedGenres = Array.from(document.querySelectorAll('input[name="genres"]:checked'))
+                               .map(cb => cb.value);
+
+    const newStory = {
+        id: Date.now(), // ID duy nhất
+        link: document.getElementById('story-link').value.trim(),
+        title: title,
+        image: document.getElementById('story-image').value.trim(),
+        text: document.getElementById('story-text').value.trim(),
+        feeling: document.getElementById('story-feeling').value.trim(),
+        status: status,
+        genres: selectedGenres
+    };
+
+    stories.unshift(newStory); // Thêm vào đầu danh sách
+    saveData();
+    renderStoryList();
+
+    // Reset form
+    document.getElementById('add-story-form').reset();
+    renderGenreCheckboxes(); // Đảm bảo checkbox được reset
+});
+
+// --- Xử lý Lọc Truyện ---
+
+// Lọc theo Trạng thái
+document.querySelectorAll('.filter-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        const filterStatus = e.target.getAttribute('data-filter');
+        const filterGenre = document.getElementById('genre-filter').value;
+        renderStoryList(filterStatus, filterGenre);
+    });
+});
+
+// Lọc theo Thể loại
+document.getElementById('genre-filter').addEventListener('change', (e) => {
+    // Tìm nút trạng thái đang active (đang được chọn)
+    const activeStatusButton = document.querySelector('.filter-btn.active');
+    const filterStatus = activeStatusButton ? activeStatusButton.getAttribute('data-filter') : 'All';
+    
+    renderStoryList(filterStatus, e.target.value);
+});
+
+
+// --- Xử lý Tự động lấy dữ liệu (Tính năng KHÔNG hoạt động với code frontend đơn thuần) ---
+
+document.getElementById('fetch-data-btn').addEventListener('click', () => {
+    const link = document.getElementById('story-link').value.trim();
+
+    if (!link) {
+        alert("Vui lòng dán liên kết vào thanh tìm kiếm trước.");
+        return;
+    }
+
+    // --- LƯU Ý QUAN TRỌNG: KHÔNG THỂ THỰC HIỆN TÍNH NĂNG NÀY TRONG TRÌNH DUYỆT ---
+    // Để tính năng này hoạt động, bạn cần một Backend Server/Serverless Function 
+    // để gửi yêu cầu HTTP đến liên kết, phân tích (scrape) nội dung HTML, 
+    // và trích xuất các thẻ Open Graph (og:title, og:image, og:description).
+    
+    alert("Tính năng 'Lấy Dữ Liệu' yêu cầu một máy chủ (Backend Server) để xử lý Web Scraping. Trong tệp JS tĩnh này, tính năng sẽ không hoạt động. Vui lòng điền thông tin thủ công hoặc sử dụng một dịch vụ Backend.");
+    // Ví dụ về API cần gọi (Tưởng tượng)
+    /*
+    fetch(`YOUR_BACKEND_API/scrape?url=${encodeURIComponent(link)}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('story-title').value = data.title;
+            document.getElementById('story-image').value = data.image;
+            document.getElementById('story-text').value = data.description;
+        })
+        .catch(error => console.error('Lỗi khi lấy dữ liệu:', error));
+    */
+});
+
+// --- Khởi tạo ---
+document.addEventListener('DOMContentLoaded', () => {
+    renderGenreCheckboxes();
+    renderGenreFilterOptions();
+    renderStoryList();
+});
